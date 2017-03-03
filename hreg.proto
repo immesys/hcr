@@ -1,0 +1,96 @@
+syntax = "proto3";
+//Version 1.0
+package hcr;
+
+service HamiltonRegistry {
+  // Create or get a mote ID given its device ID
+  // Create requires admin
+  // Get is always permitted
+  rpc GetMoteID(GetMoteIDParams) returns (GetMoteIDResponse);
+
+  // Create a new instance (program)
+  // Requires deployment key
+  rpc CreateInstance(CreateInstanceParams) returns (CreateInstanceResponse);
+
+  // Create a new deployment (keyring)
+  // Requires admin
+  rpc CreateDeployment(CreateDeploymentParams) returns (CreateDeploymentResponse);
+
+  // Bind a mote into a deployment
+  // Requires admin
+  rpc BindMote(BindMoteParams) returns (BindMoteResponse);
+
+  // Get the key for a mote id
+  // Requires a deployment key
+  rpc MoteInfo(MoteInfoParams) returns (MoteInfoResponse);
+
+}
+
+message Auth {
+  string userSecret = 1;
+  string deploymentSecret = 2;
+}
+message Status {
+  bool okay = 1;
+  string message  = 2;
+}
+message GetMoteIDParams {
+  Auth auth = 1;
+  string deviceId = 2;
+}
+message GetMoteIDResponse {
+  Status status = 1;
+  uint32 id = 2;
+  string mac = 3;
+}
+
+message CreateInstanceParams {
+  Auth auth = 1;
+  string deviceId = 2;
+  string repository = 3;
+  string commit = 4;
+  uint64 motetype = 5;
+  string extradata = 6;
+}
+message CreateInstanceResponse {
+  Status status = 1;
+  uint32 id = 2;
+  string mac = 3;
+  bytes ed25519VK = 4;
+  bytes ed25519SK = 5;
+  bytes AESK = 6;
+}
+
+message CreateDeploymentParams {
+  Auth auth = 1;
+  string name = 2;
+}
+message CreateDeploymentResponse {
+  Status status = 1;
+  string readKey = 2;
+  string writeKey = 3;
+}
+
+message BindMoteParams {
+  Auth auth = 1;
+  uint32 moteid = 2;
+  string deployment = 3;
+  bool removeExisting = 4;
+}
+message BindMoteResponse {
+  Status status = 1;
+}
+
+message MoteInfoParams {
+  Auth auth = 1;
+  uint32 moteid = 2;
+}
+message MoteInfoResponse {
+  Status status = 1;
+  bytes AESK = 2;
+  bytes ed25519VK = 3;
+  string repository = 4;
+  string commit = 5;
+  uint64 motetype = 6;
+  string extradata = 7;
+}
