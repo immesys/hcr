@@ -24,6 +24,8 @@ service HamiltonRegistry {
   // Requires a deployment key
   rpc MoteInfo(MoteInfoParams) returns (MoteInfoResponse);
 
+  // Get the info for an instance code
+  rpc InstanceInfo(InstanceInfoParams) returns (InstanceInfoResponse);
 }
 
 message Auth {
@@ -59,6 +61,7 @@ message CreateInstanceResponse {
   bytes ed25519VK = 4;
   bytes ed25519SK = 5;
   bytes AESK = 6;
+  string instance = 7;
 }
 
 message CreateDeploymentParams {
@@ -93,4 +96,19 @@ message MoteInfoResponse {
   string commit = 5;
   uint64 motetype = 6;
   string extradata = 7;
+}
+message InstanceInfoParams {
+  string instance = 1;
+}
+message InstanceInfoResponse {
+  Status status = 1;
+  uint32 moteid = 2;
+  int64 registrationDate = 3;
+  string repository = 4;
+  string commit = 5;
+  uint64 motetype = 6;
+  string extradata = 7;
+  int64 instanceDate = 8;
+  string ed25519VK = 9;
+  string latestInstance = 10;
 }

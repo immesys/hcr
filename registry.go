@@ -2,6 +2,7 @@ package hcr
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -62,7 +63,7 @@ func GetMoteInfo(ctx context.Context, moteid int, deploymentSecret string) (*Mot
 		return nil, err
 	}
 	if !rvi.Status.Okay {
-		return nil, err
+		return nil, fmt.Errorf("could not obtain mote info: %v", rvi.Status.Message)
 	}
 	cachemu.Lock()
 	cache[moteid] = cacheEntry{rvi, time.Now().Add(expiryTime)}
