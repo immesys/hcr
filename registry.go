@@ -27,6 +27,7 @@ var cachemu sync.Mutex
 
 type cacheEntry struct {
 	mir    *MoteInfoResponse
+	err    error
 	expiry time.Time
 }
 
@@ -45,7 +46,7 @@ func GetMoteInfo(ctx context.Context, moteid int, deploymentSecret string) (*Mot
 	ce, ok := cache[moteid]
 	cachemu.Unlock()
 	if ok && !ce.Expired() {
-		return ce.mir, nil
+		return ce.mir, ce.err
 	}
 	conn, err := grpc.Dial(registryAddress, grpc.WithInsecure(), grpc.WithTimeout(5*time.Second), grpc.FailOnNonTempDialError(true), grpc.WithBlock())
 	if err != nil {
@@ -60,13 +61,20 @@ func GetMoteInfo(ctx context.Context, moteid int, deploymentSecret string) (*Mot
 		Moteid: uint32(moteid),
 	})
 	if err != nil {
+		cachemu.Lock()
+		cache[moteid] = cacheEntry{nil, err, time.Now().Add(expiryTime)}
+		cachemu.Unlock()
 		return nil, err
 	}
 	if !rvi.Status.Okay {
-		return nil, fmt.Errorf("could not obtain mote info: %v", rvi.Status.Message)
+		err = fmt.Errorf("could not obtain mote info: %v", rvi.Status.Message)
+		cachemu.Lock()
+		cache[moteid] = cacheEntry{nil, err, time.Now().Add(expiryTime)}
+		cachemu.Unlock()
+		return nil, err
 	}
 	cachemu.Lock()
-	cache[moteid] = cacheEntry{rvi, time.Now().Add(expiryTime)}
+	cache[moteid] = cacheEntry{rvi, nil, time.Now().Add(expiryTime)}
 	cachemu.Unlock()
 	return rvi, nil
 }
